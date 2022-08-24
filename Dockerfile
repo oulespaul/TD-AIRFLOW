@@ -1,4 +1,4 @@
-FROM apache/airflow:2.3.3-python3.7
+FROM apache/airflow:2.2.0-python3.7
 USER airflow
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --user --upgrade pip
