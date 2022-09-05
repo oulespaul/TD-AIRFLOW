@@ -32,21 +32,25 @@ def store_to_hdfs(**kwargs):
 
     path = "/opt/airflow/ImagePool/image/Building(New)"
 
-    os.chdir(path)
+    for subdir, dirs, files in os.walk(path):
+        pprint(f"Floder {subdir} ingesting...")
+        for file in files:
+            pprint("Stored! file: {}".format(os.path.join(subdir, file)))
+        pprint(f"Floder {folder} ingestion done")
 
-    for folder in os.listdir(my_dir):
-        for file in folder:
-            pprint(f"Floder {folder} ingesting...")
-            if file.endswith(".JPG"):
-                file_path = f"{path}/{file}"
+    # for folder in os.listdir():
+    #     for file in folder:
+    #         pprint(f"Floder {folder} ingesting...")
+    #         if file.endswith(".JPG"):
+    #             file_path = f"{path}/{file}"
 
-                with open(file_path, 'rb') as file_data:
-                    my_data = file_data.read()
-                    hdfs.create_file(
-                        my_dir+f"/{file}", my_data, overwrite=True)
+    #             with open(file_path, 'rb') as file_data:
+    #                 my_data = file_data.read()
+    #                 hdfs.create_file(
+    #                     my_dir+f"/{file}", my_data, overwrite=True)
 
-                    pprint("Stored! file: {}".format(file))
-            pprint(f"Floder {folder} ingestion done")
+    #                 pprint("Stored! file: {}".format(file))
+    #         pprint(f"Floder {folder} ingestion done")
     
     pprint("Ingestion done!")
     pprint(hdfs.list_dir(my_dir))
