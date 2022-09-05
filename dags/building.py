@@ -5,6 +5,9 @@ from pywebhdfs.webhdfs import PyWebHdfsClient
 from pprint import pprint
 from airflow.models import Variable
 import os
+import pytz
+
+tzInfo = pytz.timezone('Asia/Bangkok')
 
 default_args = {
     'owner': 'TD',
@@ -21,26 +24,32 @@ dag = DAG('BUILDING',
 def store_to_hdfs(**kwargs):
     hdfs = PyWebHdfsClient(host=Variable.get("hdfs_host"),
                            port=Variable.get("hdfs_port"), user_name=Variable.get("hdfs_username"))
-    my_dir = kwargs['directory']
+    
+    ingest_date = datetime.now(tz=tzInfo)
+    my_dir = kwargs['directory'] + "/" +ingest_date.strftime("%Y%m%d")
     hdfs.make_dir(my_dir)
     hdfs.make_dir(my_dir, permission=755)
 
-    path = "/ImagePool/image/Building(New)/100"
+    path = "/opt/airflow/ImagePool/image/Building(New)"
 
     os.chdir(path)
 
-    for file in os.listdir():
-        if file.endswith(".JPG"):
-            file_path = f"{path}/{file}"
+    for folder in os.listdir(my_dir):
+        for file in folder:
+            pprint(f"Floder {folder} ingesting...")
+            if file.endswith(".JPG"):
+                file_path = f"{path}/{file}"
 
-            with open(file_path, 'rb') as file_data:
-                my_data = file_data.read()
-                hdfs.create_file(
-                    my_dir+f"/{file}", my_data, overwrite=True)
+                with open(file_path, 'rb') as file_data:
+                    my_data = file_data.read()
+                    hdfs.create_file(
+                        my_dir+f"/{file}", my_data, overwrite=True)
 
-                pprint("Stored! file: {}".format(file))
-                pprint(hdfs.list_dir(my_dir))
-
+                    pprint("Stored! file: {}".format(file))
+            pprint(f"Floder {folder} ingestion done")
+    
+    pprint("Ingestion done!")
+    pprint(hdfs.list_dir(my_dir))
 
 with dag:
     load_to_hdfs = PythonOperator(
