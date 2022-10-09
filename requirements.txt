@@ -3,3 +3,5 @@ pywebhdfs
 psycopg2
 ibm_db
 confluent-kafka
+kafka-python
+tweepy==4.10.0

@@ -8,10 +8,10 @@ from confluent_kafka import Consumer, KafkaError, KafkaException
 
 import os
 import pytz
-import pandas as pd
+import sys
 
 tzInfo = pytz.timezone('Asia/Bangkok')
-output_path = "/opt/airflow/dags/output/db2"
+output_path = "/opt/airflow/dags/output/kafka"
 ingest_date = datetime.now(tz=tzInfo)
 
 default_args = {
@@ -37,24 +37,31 @@ def ingestion():
 
     try:
         consumer.subscribe([topic_name])
-        while True:
-            msg = consumer.poll(timeout=1.0) # Set Timeout
-            if msg is None: continue # Check condition that no have any message then skip
+        with open(f"{output_path}/kafka_twitter_{ingest_date.strftime('%Y%m%d')}_.txt", "w", encoding="utf-8") as f:
+            msg_count = 0
+            while True:
+                msg = consumer.poll(timeout=1.0)
+                if msg is None: continue
 
-            if msg.error(): # Check condition if have any message then write log and end of consume
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    # End of partition event
-                    sys.stderr.write('%% %s [%d] reached end at offset %d\n' %
-                                     (msg.topic(), msg.partition(), msg.offset()))
-                elif msg.error():
-                    raise KafkaException(msg.error())
-            else:
-                consumer.commit(asynchronous=False) # Commit message what consumed
-                print(msg.value().decode('utf-8')) # Display message consumed
-    except:
-        print("Consume error")
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        # End of partition event
+                        sys.stderr.write('%% %s [%d] reached end at offset %d\n' %
+                                        (msg.topic(), msg.partition(), msg.offset()))
+                    elif msg.error():
+                        raise KafkaException(msg.error())
+                else:
+                    # consumer.commit(asynchronous=False)
+                    value = msg.value().decode('utf-8')
+                    f.write(value)
+                    f.write('\n')
+                    print(value)
+                    msg_count += 1
+                    if msg_count == 50:
+                        return
     finally:
-        consumer.close()
+        # Close down consumer to commit final offsets.
+        return consumer.close()
 
 
 def store_to_hdfs(**kwargs):
@@ -112,13 +119,13 @@ with dag:
     load_to_hdfs = PythonOperator(
         task_id='load_to_hdfs',
         python_callable=store_to_hdfs,
-        op_kwargs={'directory': '/data/raw_zone/db2'},
+        op_kwargs={'directory': '/data/raw_zone/kafka'},
     )
 
     load_to_hdfs_for_redundant = PythonOperator(
         task_id='load_to_hdfs_for_redundant',
         python_callable=store_to_hdfs_for_redundant,
-        op_kwargs={'directory': '/data/raw_zone/db2'},
+        op_kwargs={'directory': '/data/raw_zone/kafka'},
     )
 
 ingestion_task >> load_to_hdfs >> load_to_hdfs_for_redundant
