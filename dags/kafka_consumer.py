@@ -37,7 +37,7 @@ def ingestion():
 
     try:
         consumer.subscribe([topic_name])
-        with open(f"{output_path}/kafka_twitter_{ingest_date.strftime('%Y%m%d')}_.txt", "w", encoding="utf-8") as f:
+        with open(f"{output_path}/kafka_twitter_{ingest_date.strftime('%Y%m%d')}.txt", "w", encoding="utf-8") as f:
             msg_count = 0
             while True:
                 msg = consumer.poll(timeout=1.0)
@@ -75,7 +75,7 @@ def store_to_hdfs(**kwargs):
 
     os.chdir(output_path)
     for file in os.listdir():
-        if file.endswith(".csv"):
+        if file.endswith(".txt"):
             file_path = f"{output_path}/{file}"
 
             with open(file_path, 'r', encoding="utf8") as file_data:
@@ -98,7 +98,7 @@ def store_to_hdfs_for_redundant(**kwargs):
 
     os.chdir(output_path)
     for file in os.listdir():
-        if file.endswith(".csv"):
+        if file.endswith(".txt"):
             file_path = f"{output_path}/{file}"
 
             with open(file_path, 'r', encoding="utf8") as file_data:
