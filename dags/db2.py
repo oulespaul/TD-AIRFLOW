@@ -37,13 +37,13 @@ def ingestion():
     dsn_protocol = "TCPIP"
 
     dsn = (
-    "DRIVER={0};"
-    "DATABASE={1};"
-    "HOSTNAME={2};"
-    "PORT={3};"
-    "PROTOCOL={4};"
-    "UID={5};"
-    "PWD={6};").format(dsn_driver, dsn_database, dsn_hostname, dsn_port, dsn_protocol, dsn_uid, dsn_pwd)
+        "DRIVER={0};"
+        "DATABASE={1};"
+        "HOSTNAME={2};"
+        "PORT={3};"
+        "PROTOCOL={4};"
+        "UID={5};"
+        "PWD={6};").format(dsn_driver, dsn_database, dsn_hostname, dsn_port, dsn_protocol, dsn_uid, dsn_pwd)
 
     print(dsn)
 
@@ -54,12 +54,13 @@ def ingestion():
     try:
         conn = ibm_db.connect(dsn, "", "")
         print("Connected to database: ", dsn_database, "as user: ", dsn_uid,
-            "on ho                                     st: ", dsn_hostname)
+              "on ho                                     st: ", dsn_hostname)
 
         db_conn = ibm_db_dbi.Connection(conn)
         df = pd.read_sql(sql, db_conn)
         print(df)
-        df.to_csv(f'{output_path}/product_catagory_{ingest_date.strftime("%Y%m%d")}.csv')
+        df.to_csv(
+            f'{output_path}/product_catagory_{ingest_date.strftime("%Y%m%d")}.csv')
     except:
         print("Unable to connect: ", ibm_db.conn_errormsg())
 
@@ -128,4 +129,16 @@ with dag:
         op_kwargs={'directory': '/data/raw_zone/db2'},
     )
 
-ingestion_task >> load_to_hdfs >> load_to_hdfs_for_redundant
+    load_to_hdfs_processed = PythonOperator(
+        task_id='load_to_hdfs_processed',
+        python_callable=store_to_hdfs,
+        op_kwargs={'directory': '/data/processed_zone/db2'},
+    )
+
+    load_to_hdfs_processed_for_redundant = PythonOperator(
+        task_id='load_to_hdfs_processed_for_redundant',
+        python_callable=store_to_hdfs_for_redundant,
+        op_kwargs={'directory': '/data/processed_zone/db2'},
+    )
+
+ingestion_task >> load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant
