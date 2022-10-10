@@ -41,13 +41,14 @@ def ingestion():
             msg_count = 0
             while True:
                 msg = consumer.poll(timeout=1.0)
-                if msg is None: continue
+                if msg is None:
+                    continue
 
                 if msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         # End of partition event
                         sys.stderr.write('%% %s [%d] reached end at offset %d\n' %
-                                        (msg.topic(), msg.partition(), msg.offset()))
+                                         (msg.topic(), msg.partition(), msg.offset()))
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
@@ -128,4 +129,16 @@ with dag:
         op_kwargs={'directory': '/data/raw_zone/kafka'},
     )
 
-ingestion_task >> load_to_hdfs >> load_to_hdfs_for_redundant
+    load_to_hdfs_processed = PythonOperator(
+        task_id='load_to_hdfs_processed',
+        python_callable=store_to_hdfs,
+        op_kwargs={'directory': '/data/processed_zone/kafka'},
+    )
+
+    load_to_hdfs_processed_for_redundant = PythonOperator(
+        task_id='load_to_hdfs_processed_for_redundant',
+        python_callable=store_to_hdfs_for_redundant,
+        op_kwargs={'directory': '/data/processed_zone/kafka'},
+    )
+
+ingestion_task >> load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant
