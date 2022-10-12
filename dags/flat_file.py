@@ -28,7 +28,7 @@ def download_flat_file():
     url = "https://www.treasury.go.th/th/download.php?ref=oJEaLKEinJk4oaO3oJ93MRksoJIaoUEcnJM4pKOSoJI3oRkvoJSaqUEsnFM4AUNloGS3ARjkoKSaEKExnJy4KjoSo3QoSo3Q"
     res = requests.get(url, allow_redirects=True)
 
-    with open(f"{output_path}/รายงานผลความพึงพอใจในการให้บริการ_{ingest_date.strftime('%Y%m%d')}.pdf", 'wb', encoding="utf-8") as file:
+    with open(f"{output_path}/รายงานผลความพึงพอใจในการให้บริการ_{ingest_date.strftime('%Y%m%d')}.pdf", 'wb') as file:
         file.write(res.content)
 
 
