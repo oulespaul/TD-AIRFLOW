@@ -46,10 +46,10 @@ def store_to_hdfs(**kwargs):
         if file.endswith(".pdf"):
             file_path = f"{output_path}/{file}"
 
-            with open(file_path, 'r', encoding="utf8") as file_data:
+            with open(file_path, 'rb') as file_data:
                 my_data = file_data.read()
                 hdfs.create_file(
-                    my_dir+f"/{file}", my_data.encode('utf-8'), overwrite=True)
+                    my_dir+f"/{file}", my_data, overwrite=True)
 
                 pprint("Stored! file: {}".format(file))
                 pprint(hdfs.list_dir(my_dir))
@@ -69,10 +69,10 @@ def store_to_hdfs_for_redundant(**kwargs):
         if file.endswith(".pdf"):
             file_path = f"{output_path}/{file}"
 
-            with open(file_path, 'r', encoding="utf8") as file_data:
+            with open(file_path, 'rb') as file_data:
                 my_data = file_data.read()
                 hdfs.create_file(
-                    my_dir+f"/{file}", my_data.encode('utf-8'), overwrite=True)
+                    my_dir+f"/{file}", my_data, overwrite=True)
 
     pprint("Stored! file: {}".format(file))
     pprint(hdfs.list_dir(my_dir))
