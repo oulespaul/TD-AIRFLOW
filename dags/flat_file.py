@@ -79,6 +79,11 @@ def store_to_hdfs_for_redundant(**kwargs):
 
 
 with dag:
+    ingest_flat_file = PythonOperator(
+        task_id='download_flat_file',
+        python_callable=download_flat_file,
+    )
+
     load_to_hdfs = PythonOperator(
         task_id='load_to_hdfs',
         python_callable=store_to_hdfs,
@@ -103,4 +108,4 @@ with dag:
         op_kwargs={'directory': '/data/processed_zone/flat_file'},
     )
 
-load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant
+ingest_flat_file >> load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant
