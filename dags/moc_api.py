@@ -45,7 +45,7 @@ def ingestion():
         for com in com_codes:
             com_code = com['CODE']
             com_name = com['WPIC_NAME'].replace("/", "_").strip()
-            file_name = f"output/{province_name}/{com_name}/2012_2022"
+            file_name = f"{output_path}/{province_name}/{com_name}/2012_2022"
             dirname = os.path.dirname(file_name)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
@@ -62,25 +62,12 @@ def store_to_hdfs(**kwargs):
                            port=Variable.get("hdfs_port"), user_name=Variable.get("hdfs_username"))
 
     ingest_date = datetime.now(tz=tzInfo)
-    my_dir = kwargs['directory'] + "/" + ingest_date.strftime("%Y%m%d")
-    hdfs.make_dir(my_dir)
-    hdfs.make_dir(my_dir, permission=755)
-
-    os.chdir(output_path)
-    for file in os.listdir():
-        if file.endswith(".csv"):
-            file_path = f"{output_path}/{file}"
-
-            with open(file_path, 'r', encoding="utf8") as file_data:
-                my_data = file_data.read()
-                hdfs.create_file(
-                    my_dir+f"/{file}", my_data.encode('utf-8'), overwrite=True)
-
-                pprint("Stored! file: {}".format(file))
-                pprint(hdfs.list_dir(my_dir))
 
     for subdir, dirs, files in os.walk(output_path):
         for file in files:
+            if file.endswith(".gitkeep"):
+                return
+
             folder_name = subdir.replace(output_path, "")
             my_dir = kwargs['directory'] + "/" + \
                 ingest_date.strftime("%Y%m%d") + "/" + folder_name
