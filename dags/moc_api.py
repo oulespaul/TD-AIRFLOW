@@ -73,17 +73,17 @@ def store_to_hdfs(**kwargs):
             my_dir = kwargs['directory'] + "/" + \
                 ingest_date.strftime("%Y%m%d") + "/" + folder_name
             print("my_dir: " + my_dir)
-            # hdfs.make_dir(my_dir)
-            # hdfs.make_dir(my_dir, permission=755)
+            hdfs.make_dir(my_dir)
+            hdfs.make_dir(my_dir, permission=755)
 
             file_path = os.path.join(output_path, subdir, file)
             print(f"file path: {file_path}")
-            # with open(file_path, 'r', encoding="utf8") as file_data:
-            #     my_data = file_data.read()
-            #     hdfs.create_file(
-            #         my_dir+f"/{file}", my_data.encode('utf-8'), overwrite=True)
+            with open(file_path, 'r', encoding="utf8") as file_data:
+                my_data = file_data.read()
+                hdfs.create_file(
+                    my_dir+f"/{file}", my_data.encode('utf-8'), overwrite=True)
 
-            #     pprint("Stored! file: {}".format(file))
+                pprint("Stored! file: {}".format(file))
 
 
 def store_to_hdfs_for_redundant(**kwargs):
