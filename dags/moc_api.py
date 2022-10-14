@@ -67,7 +67,7 @@ def store_to_hdfs(**kwargs):
         for file in files:
             print("file: " + file)
             if file.endswith(".gitkeep"):
-                return
+                continue
 
             folder_name = subdir.replace(output_path, "")
             my_dir = kwargs['directory'] + "/" + \
