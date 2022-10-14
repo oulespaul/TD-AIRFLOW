@@ -74,8 +74,8 @@ def store_to_hdfs(**kwargs):
             hdfs.make_dir(my_dir)
             hdfs.make_dir(my_dir, permission=755)
 
-            file_path = os.path.join(subdir, file)
-
+            file_path = os.path.join(output_path, subdir, file)
+            print(f"file path: {file_path}")
             with open(file_path, 'r', encoding="utf8") as file_data:
                 my_data = file_data.read()
                 hdfs.create_file(
@@ -139,7 +139,7 @@ with dag:
 
     clean_up_output = BashOperator(
         task_id='clean_up_output',
-        bash_command='rm -f /opt/airflow/dags/output/moc_api/*',
+        bash_command='rm -rf /opt/airflow/dags/output/moc_api/*',
     )
 
 ingestion_from_api >> load_to_hdfs >> clean_up_output
