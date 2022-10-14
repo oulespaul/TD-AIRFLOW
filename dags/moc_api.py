@@ -71,7 +71,7 @@ def store_to_hdfs(**kwargs):
 
             folder_name = subdir.replace(output_path, "")
             my_dir = kwargs['directory'] + "/" + \
-                ingest_date.strftime("%Y%m%d") + "/" + folder_name
+                ingest_date.strftime("%Y%m%d") + folder_name.encode('utf-8')
             print("my_dir: " + my_dir)
             hdfs.make_dir(my_dir)
             hdfs.make_dir(my_dir, permission=755)
