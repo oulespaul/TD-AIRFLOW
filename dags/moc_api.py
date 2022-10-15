@@ -52,6 +52,8 @@ def ingestion():
             with open(f'{file_name}.json', 'w', encoding='utf8') as file:
                 response = requests.get(
                     f"https://dataapi.moc.go.th/csi-product-indexes?com_code={com_code}&province_code={province_code}&from_year=2012&to_year=2022")
+                if response.status_code != 200:
+                    continue
                 data = response.json()
                 json.dump(data, file, ensure_ascii=False)
     print('Done')
