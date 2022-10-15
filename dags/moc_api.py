@@ -150,4 +150,4 @@ with dag:
         bash_command='rm -rf /opt/airflow/dags/output/moc_api/*',
     )
 
-ingestion_from_api >> load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant
+ingestion_from_api >> load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant >> clean_up_output
