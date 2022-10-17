@@ -41,11 +41,9 @@ def ingestion():
 
     for province in province_codes:
         province_code = province['CODE']
-        province_name = province['NAME']
         for com in com_codes:
             com_code = com['CODE']
-            com_name = com['WPIC_NAME'].replace("/", "_").strip()
-            file_name = f"{output_path}/{province_name}/{com_name}/2012_2022"
+            file_name = f"{output_path}/{province_code}/{com_code}/2012_2022"
             dirname = os.path.dirname(file_name)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
