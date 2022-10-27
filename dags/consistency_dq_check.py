@@ -17,7 +17,7 @@ dag = DAG('CONSISTENCY_DQ_CHECK',
           catchup=False)
 
 def mssql_create_connection():
-    connection_string = "Driver={SQL Server};Server=192.168.45.83,4070;UID=udlake;PWD=ekA@latad;TrustServerCertificate=yes;"
+    connection_string = "Driver={ODBC Driver 17 for SQL Server};Server=192.168.45.83,4070;UID=udlake;PWD=ekA@latad;TrustServerCertificate=yes;"
     cnxn = pyodbc.connect(connection_string)
     return cnxn
 
