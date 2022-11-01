@@ -15,7 +15,7 @@ default_args = {
     'schedule_interval': None,
 }
 
-dag = DAG('BUILDING',
+dag = DAG('XML',
           schedule_interval='@yearly',
           default_args=default_args,
           catchup=False)
@@ -30,7 +30,7 @@ def store_to_hdfs(**kwargs):
     hdfs.make_dir(my_dir)
     hdfs.make_dir(my_dir, permission=755)
 
-    path = "/opt/airflow/ImagePool/image/Building(New)"
+    path = "/opt/airflow/ImagePool/UAT XML"
 
     for subdir, dirs, files in os.walk(path):
         pprint(f"Floder {subdir} ingesting...")
@@ -55,7 +55,7 @@ def store_to_hdfs_for_redundant(**kwargs):
     hdfs.make_dir(my_dir)
     hdfs.make_dir(my_dir, permission=755)
 
-    path = "/opt/airflow/ImagePool/image/Building(New)"
+    path = "/opt/airflow/ImagePool/UAT XML"
 
     for subdir, dirs, files in os.walk(path):
         pprint(f"Floder {subdir} ingesting...")
@@ -72,30 +72,28 @@ def store_to_hdfs_for_redundant(**kwargs):
 
 
 with dag:
-    # Raw Zone
     load_to_hdfs = PythonOperator(
         task_id='load_to_hdfs',
         python_callable=store_to_hdfs,
-        op_kwargs={'directory': '/data/raw_zone/building'},
+        op_kwargs={'directory': '/data/raw_zone/xml'},
     )
 
     load_to_hdfs_for_redundant = PythonOperator(
         task_id='load_to_hdfs_for_redundant',
         python_callable=store_to_hdfs_for_redundant,
-        op_kwargs={'directory': '/data/raw_zone/building'},
+        op_kwargs={'directory': '/data/raw_zone/xml'},
     )
 
-    # Processed Zone
     load_to_hdfs_processed = PythonOperator(
         task_id='load_to_hdfs_processed',
         python_callable=store_to_hdfs,
-        op_kwargs={'directory': '/data/processed_zone/building'},
+        op_kwargs={'directory': '/data/processed_zone/xml'},
     )
 
     load_to_hdfs_processed_for_redundant = PythonOperator(
         task_id='load_to_hdfs_processed_for_redundant',
         python_callable=store_to_hdfs_for_redundant,
-        op_kwargs={'directory': '/data/processed_zone/building'},
+        op_kwargs={'directory': '/data/processed_zone/xml'},
     )
 
 load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant
