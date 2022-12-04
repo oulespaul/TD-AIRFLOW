@@ -15,7 +15,7 @@ default_args = {
     'schedule_interval': None,
 }
 
-dag = DAG('BUILDING',
+dag = DAG('BUILDING_PLAN_UAT_TD01',
           schedule_interval='@yearly',
           default_args=default_args,
           catchup=False)
@@ -30,7 +30,7 @@ def store_to_hdfs(**kwargs):
     hdfs.make_dir(my_dir)
     hdfs.make_dir(my_dir, permission=755)
 
-    path = "/opt/airflow/ImagePool/image/Building(New)"
+    path = "/opt/airflow/ImagePool/Standard Pattern"
 
     for subdir, dirs, files in os.walk(path):
         pprint(f"Floder {subdir} ingesting...")
@@ -48,14 +48,14 @@ def store_to_hdfs(**kwargs):
 
 def store_to_hdfs_for_redundant(**kwargs):
     hdfs = PyWebHdfsClient(host=Variable.get("hdfs_host_redundant"),
-                           port=Variable.get("hdfs_port_redundant"), user_name=Variable.get("hdfs_username_redundant"))
+                           port=Variable.get("hdfs_port_redundant"), user_name="uattd01")
 
     ingest_date = datetime.now(tz=tzInfo)
     my_dir = kwargs['directory'] + "/" + ingest_date.strftime("%Y%m%d")
     hdfs.make_dir(my_dir)
     hdfs.make_dir(my_dir, permission=755)
 
-    path = "/opt/airflow/ImagePool/image/Building(New)"
+    path = "/opt/airflow/ImagePool/Standard Pattern"
 
     for subdir, dirs, files in os.walk(path):
         pprint(f"Floder {subdir} ingesting...")
@@ -73,29 +73,29 @@ def store_to_hdfs_for_redundant(**kwargs):
 
 with dag:
     # Raw Zone
-    # load_to_hdfs = PythonOperator(
-    #     task_id='load_to_hdfs',
+    # load_to_hdfs_raw = PythonOperator(
+    #     task_id='load_to_hdfs_raw',
     #     python_callable=store_to_hdfs,
-    #     op_kwargs={'directory': '/data/UAT_raw_zone/building'},
+    #     op_kwargs={'directory': '/data/UAT_raw_zone/building_plan'},
     # )
 
-    load_to_hdfs_for_redundant = PythonOperator(
-        task_id='load_to_hdfs_for_redundant',
+    load_to_hdfs_raw_for_redundant = PythonOperator(
+        task_id='load_to_hdfs_raw_for_redundant',
         python_callable=store_to_hdfs_for_redundant,
-        op_kwargs={'directory': '/data/UAT_raw_zone/building'},
+        op_kwargs={'directory': '/data/UAT_raw_zone/building_plan/uat_td01'},
     )
 
     # Processed Zone
     # load_to_hdfs_processed = PythonOperator(
     #     task_id='load_to_hdfs_processed',
     #     python_callable=store_to_hdfs,
-    #     op_kwargs={'directory': '/data/UAT_processed_zone/building'},
+    #     op_kwargs={'directory': '/data/UAT_processed_zone/building_plan'},
     # )
 
     load_to_hdfs_processed_for_redundant = PythonOperator(
         task_id='load_to_hdfs_processed_for_redundant',
         python_callable=store_to_hdfs_for_redundant,
-        op_kwargs={'directory': '/data/UAT_processed_zone/building'},
+        op_kwargs={'directory': '/data/UAT_processed_zone/building_plan/uat_td01'},
     )
 
-load_to_hdfs_for_redundant >> load_to_hdfs_processed_for_redundant
+load_to_hdfs_raw_for_redundant >> load_to_hdfs_processed_for_redundant

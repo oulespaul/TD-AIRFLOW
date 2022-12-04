@@ -121,11 +121,11 @@ with dag:
         python_callable=ingestion,
     )
 
-    load_to_hdfs = PythonOperator(
-        task_id='load_to_hdfs',
-        python_callable=store_to_hdfs,
-        op_kwargs={'directory': '/data/UAT_raw_zone/moc_api'},
-    )
+    # load_to_hdfs = PythonOperator(
+    #     task_id='load_to_hdfs',
+    #     python_callable=store_to_hdfs,
+    #     op_kwargs={'directory': '/data/UAT_raw_zone/moc_api'},
+    # )
 
     load_to_hdfs_for_redundant = PythonOperator(
         task_id='load_to_hdfs_for_redundant',
@@ -133,11 +133,11 @@ with dag:
         op_kwargs={'directory': '/data/UAT_raw_zone/moc_api'},
     )
 
-    load_to_hdfs_processed = PythonOperator(
-        task_id='load_to_hdfs_processed',
-        python_callable=store_to_hdfs,
-        op_kwargs={'directory': '/data/UAT_processed_zone/moc_api'},
-    )
+    # load_to_hdfs_processed = PythonOperator(
+    #     task_id='load_to_hdfs_processed',
+    #     python_callable=store_to_hdfs,
+    #     op_kwargs={'directory': '/data/UAT_processed_zone/moc_api'},
+    # )
 
     load_to_hdfs_processed_for_redundant = PythonOperator(
         task_id='load_to_hdfs_processed_for_redundant',
@@ -150,4 +150,4 @@ with dag:
         bash_command='rm -rf /opt/airflow/dags/output/moc_api/*',
     )
 
-ingestion_from_api >> load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant >> clean_up_output
+ingestion_from_api >> load_to_hdfs_for_redundant >> load_to_hdfs_processed_for_redundant >> clean_up_output

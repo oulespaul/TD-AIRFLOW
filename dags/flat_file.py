@@ -84,11 +84,11 @@ with dag:
         python_callable=download_flat_file,
     )
 
-    load_to_hdfs = PythonOperator(
-        task_id='load_to_hdfs',
-        python_callable=store_to_hdfs,
-        op_kwargs={'directory': '/data/UAT_raw_zone/flat_file'},
-    )
+    # load_to_hdfs = PythonOperator(
+    #     task_id='load_to_hdfs',
+    #     python_callable=store_to_hdfs,
+    #     op_kwargs={'directory': '/data/UAT_raw_zone/flat_file'},
+    # )
 
     load_to_hdfs_for_redundant = PythonOperator(
         task_id='load_to_hdfs_for_redundant',
@@ -96,11 +96,11 @@ with dag:
         op_kwargs={'directory': '/data/UAT_raw_zone/flat_file'},
     )
 
-    load_to_hdfs_processed = PythonOperator(
-        task_id='load_to_hdfs_processed',
-        python_callable=store_to_hdfs,
-        op_kwargs={'directory': '/data/UAT_processed_zone/flat_file'},
-    )
+    # load_to_hdfs_processed = PythonOperator(
+    #     task_id='load_to_hdfs_processed',
+    #     python_callable=store_to_hdfs,
+    #     op_kwargs={'directory': '/data/UAT_processed_zone/flat_file'},
+    # )
 
     load_to_hdfs_processed_for_redundant = PythonOperator(
         task_id='load_to_hdfs_processed_for_redundant',
@@ -108,4 +108,4 @@ with dag:
         op_kwargs={'directory': '/data/UAT_processed_zone/flat_file'},
     )
 
-ingest_flat_file >> load_to_hdfs >> load_to_hdfs_for_redundant >> load_to_hdfs_processed >> load_to_hdfs_processed_for_redundant
+ingest_flat_file >> load_to_hdfs_for_redundant >> load_to_hdfs_processed_for_redundant
