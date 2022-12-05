@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
 from datetime import datetime
 from pywebhdfs.webhdfs import PyWebHdfsClient
 from pprint import pprint
@@ -108,4 +109,9 @@ with dag:
         op_kwargs={'directory': '/data/UAT_processed_zone/flat_file'},
     )
 
-ingest_flat_file >> load_to_hdfs_for_redundant >> load_to_hdfs_processed_for_redundant
+    clean_up_output = BashOperator(
+        task_id='clean_up_output',
+        bash_command='rm -f /opt/airflow/dags/output/flat_file/*',
+    )
+
+ingest_flat_file >> load_to_hdfs_for_redundant >> load_to_hdfs_processed_for_redundant >> clean_up_output
