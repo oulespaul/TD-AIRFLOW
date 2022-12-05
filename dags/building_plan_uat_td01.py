@@ -48,7 +48,7 @@ def store_to_hdfs(**kwargs):
 
 def store_to_hdfs_for_redundant(**kwargs):
     hdfs = PyWebHdfsClient(host=Variable.get("hdfs_host_redundant"),
-                           port=Variable.get("hdfs_port_redundant"), user_name="uattd01")
+                           port=Variable.get("hdfs_port_redundant"), user_name=Variable.get("hdfs_username_redundant"))
 
     ingest_date = datetime.now(tz=tzInfo)
     my_dir = kwargs['directory'] + "/" + ingest_date.strftime("%Y%m%d")
