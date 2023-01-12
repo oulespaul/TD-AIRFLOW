@@ -64,6 +64,7 @@ def store_to_hdfs(**kwargs):
 
     ingest_date = datetime.now(tz=tzInfo)
 
+    file_count = 0
     for subdir, dirs, files in os.walk(output_path):
         for file in files:
             print("file: " + file)
@@ -83,8 +84,10 @@ def store_to_hdfs(**kwargs):
                 my_data = file_data.read()
                 hdfs.create_file(
                     my_dir+f"/{file}", my_data.encode('utf-8'), overwrite=True)
-
                 pprint("Stored! file: {}".format(file))
+                file_count+=1
+
+    stamp_logging(file_count, my_dir)
 
 
 def store_to_hdfs_for_redundant(**kwargs):
@@ -92,7 +95,7 @@ def store_to_hdfs_for_redundant(**kwargs):
                            port=Variable.get("hdfs_port_redundant"), user_name=Variable.get("hdfs_username_redundant"))
 
     ingest_date = datetime.now(tz=tzInfo)
-
+    file_count = 0
     for subdir, dirs, files in os.walk(output_path):
         for file in files:
             print("file: " + file)
@@ -112,9 +115,24 @@ def store_to_hdfs_for_redundant(**kwargs):
                 my_data = file_data.read()
                 hdfs.create_file(
                     my_dir+f"/{file}", my_data.encode('utf-8'), overwrite=True)
-
                 pprint("Stored! file: {}".format(file))
+                file_count+=1
 
+    stamp_logging(file_count, my_dir)
+
+def stamp_logging(totalFile, tgtFolder):
+    url = "http://192.168.45.110:3000/un-structure-report/stamp-report"
+    payload = {
+        "ingestionDatetime": ingest_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "srcFolder": "moc_api",
+        "totalSrcFile": totalFile,
+        "tgtFolder": tgtFolder,
+        "totalFileLoaded": totalFile,
+        "status":"Success"
+    }
+    response = requests.post(url, json = payload)
+
+    pprint(f"Stamp logging response: {response}")
 
 with dag:
     ingestion_from_api = PythonOperator(

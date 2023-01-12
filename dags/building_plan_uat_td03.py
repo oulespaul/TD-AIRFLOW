@@ -6,6 +6,7 @@ from pprint import pprint
 from airflow.models import Variable
 import os
 import pytz
+import requests
 
 tzInfo = pytz.timezone('Asia/Bangkok')
 
@@ -32,6 +33,7 @@ def store_to_hdfs(**kwargs):
 
     path = "/opt/airflow/ImagePool/Standard Pattern"
 
+    file_count = 0
     for subdir, dirs, files in os.walk(path):
         pprint(f"Floder {subdir} ingesting...")
         for file in files:
@@ -39,12 +41,12 @@ def store_to_hdfs(**kwargs):
             with open(file_path, 'rb') as file_data:
                 my_data = file_data.read()
                 hdfs.create_file(my_dir+f"/{file}", my_data, overwrite=True)
-
+                file_count += 1
         pprint(f"Floder {subdir} ingestion done")
 
     pprint("Ingestion done!")
     pprint(hdfs.list_dir(my_dir))
-
+    stamp_logging(file_count, my_dir)
 
 def store_to_hdfs_for_redundant(**kwargs):
     hdfs = PyWebHdfsClient(host=Variable.get("hdfs_host_redundant"),
@@ -57,6 +59,7 @@ def store_to_hdfs_for_redundant(**kwargs):
 
     path = "/opt/airflow/ImagePool/Standard Pattern"
 
+    file_count = 0
     for subdir, dirs, files in os.walk(path):
         pprint(f"Floder {subdir} ingesting...")
         for file in files:
@@ -64,12 +67,27 @@ def store_to_hdfs_for_redundant(**kwargs):
             with open(file_path, 'rb') as file_data:
                 my_data = file_data.read()
                 hdfs.create_file(my_dir+f"/{file}", my_data, overwrite=True)
-
+                file_count+=1
         pprint(f"Floder {subdir} ingestion done")
 
     pprint("Ingestion done!")
     pprint(hdfs.list_dir(my_dir))
+    stamp_logging(file_count, my_dir)
 
+def stamp_logging(totalFile, tgtFolder):
+    ingest_date = datetime.now(tz=tzInfo)
+    url = "http://192.168.45.110:3000/un-structure-report/stamp-report"
+    payload = {
+        "ingestionDatetime": ingest_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "srcFolder": "building_plan_uat_td03",
+        "totalSrcFile": totalFile,
+        "tgtFolder": tgtFolder,
+        "totalFileLoaded": totalFile,
+        "status":"Success"
+    }
+    response = requests.post(url, json = payload)
+
+    pprint(f"Stamp logging response: {response}")
 
 with dag:
     # Raw Zone

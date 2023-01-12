@@ -42,6 +42,7 @@ def store_to_hdfs(**kwargs):
     hdfs.make_dir(my_dir)
     hdfs.make_dir(my_dir, permission=755)
 
+    file_count = 0
     os.chdir(output_path)
     for file in os.listdir():
         if file.endswith(".pdf"):
@@ -54,6 +55,9 @@ def store_to_hdfs(**kwargs):
 
                 pprint("Stored! file: {}".format(file))
                 pprint(hdfs.list_dir(my_dir))
+                file_count+=1
+    
+    stamp_logging(file_count, my_dir)
 
 
 def store_to_hdfs_for_redundant(**kwargs):
@@ -65,6 +69,7 @@ def store_to_hdfs_for_redundant(**kwargs):
     hdfs.make_dir(my_dir)
     hdfs.make_dir(my_dir, permission=755)
 
+    file_count=0
     os.chdir(output_path)
     for file in os.listdir():
         if file.endswith(".pdf"):
@@ -74,10 +79,25 @@ def store_to_hdfs_for_redundant(**kwargs):
                 my_data = file_data.read()
                 hdfs.create_file(
                     my_dir+f"/{file}", my_data, overwrite=True)
+                pprint("Stored! file: {}".format(file))
+                pprint(hdfs.list_dir(my_dir))
+                file_count+=1
+    
+    stamp_logging(file_count, my_dir)
 
-    pprint("Stored! file: {}".format(file))
-    pprint(hdfs.list_dir(my_dir))
+def stamp_logging(totalFile, tgtFolder):
+    url = "http://192.168.45.110:3000/un-structure-report/stamp-report"
+    payload = {
+        "ingestionDatetime": ingest_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "srcFolder": "flat_file",
+        "totalSrcFile": totalFile,
+        "tgtFolder": tgtFolder,
+        "totalFileLoaded": totalFile,
+        "status":"Success"
+    }
+    response = requests.post(url, json = payload)
 
+    pprint(f"Stamp logging response: {response}")
 
 with dag:
     ingest_flat_file = PythonOperator(
