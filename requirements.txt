@@ -5,3 +5,4 @@ ibm_db==3.1.0
 confluent-kafka
 kafka-python
 tweepy==4.10.0
+beautifulsoup4
