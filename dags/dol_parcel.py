@@ -42,7 +42,8 @@ dag = DAG('DOL_PARCEL',
           default_args=default_args,
           catchup=False)
 
-def authenticate():
+def authenticate(**kwargs):
+    ti = kwargs['ti']
     HEADERS = {"Consumer-Key": consumer_key}
     PARAMS = {"ConsumerSecret": consumer_secret}
     try:
@@ -62,7 +63,8 @@ def authenticate():
     except:
         print("Authenticate failed!")
 
-def get_land_office():
+def get_land_office(**kwargs):
+    ti = kwargs['ti']
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
         connection = pyodbc.connect(conn_str)
@@ -80,7 +82,8 @@ def get_land_office():
     except:
         print("Get Land office failed!")
 
-def get_column_mapping():
+def get_column_mapping(**kwargs):
+    ti = kwargs['ti']
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
         connection = pyodbc.connect(conn_str)
@@ -96,7 +99,8 @@ def get_column_mapping():
     except:
         print("Get Mapping column failed!")
 
-def main():
+def main(**kwargs):
+    ti = kwargs['ti']
     token = ti.xcom_pull(key='auth_token')
     print(f"token -> {token}")
 
