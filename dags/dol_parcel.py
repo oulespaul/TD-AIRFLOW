@@ -1,14 +1,35 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.models import Variable
 from datetime import datetime
 from pprint import pprint
 
 import pytz
+import requests
+import pyodbc
+import pandas as pd
 
 tzInfo = pytz.timezone('Asia/Bangkok')
 source_path = "/opt/airflow/dags/source/moc_api"
 output_path = "/opt/airflow/dags/output/moc_api"
 ingest_date = datetime.now(tz=tzInfo)
+
+#Config
+property_type = "Parcel"
+
+doi_host = "https://10.13.16.166"
+auth_path = "/api/v1/Auth/Validate"
+main_change_path = "/apiExchange/v1/Change"
+
+consumer_secret = "cs_mw1NAJU1pqNQkZVlXdVNvoCO6zutNkqXuSxcFdQ7Y2J"
+consumer_key = "ck_bwTrnf24CssYIV7EzHxC5trFB07ioRggKl6NkWEwZu9"
+
+server_host = '192.168.45.83'
+server_port = "4070"
+database = 'TRD_Raw'
+username = 'udlake'
+password = 'ekA@lataduat'
+driver= '{SQL Server}'
 
 default_args = {
     'owner': 'TD',
@@ -21,46 +42,91 @@ dag = DAG('DOL_PARCEL',
           default_args=default_args,
           catchup=False)
 
-def ingestion():
-    pprint("Ingestion...")
+def authenticate():
+    HEADERS = {"Consumer-Key": consumer_key}
+    PARAMS = {"ConsumerSecret": consumer_secret}
+    try:
+        response = requests.get(
+            url=f"{doi_host}{auth_path}",
+            params=PARAMS,
+            headers=HEADERS,
+            verify=False
+        )
 
-def fetch_metadata():
-    pprint("Fetch metadata...")
+        if (response.status_code == 200):
+            token = response.json()["token"]
+            ti.xcom_push(key='auth_token', value=token)
+            return token
+        else:
+            return None
+    except:
+        print("Authenticate failed!")
 
-def load_data_toDB():
-    pprint("Loading Data...")
+def get_land_office():
+    try:
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        connection = pyodbc.connect(conn_str)
 
-def stamp_logging():
-    pprint("Logging...")
+        sql_query = 'SELECT * FROM common.dbo.TB_MAS_LANDOFFICESEQ'
+        offices = pd.read_sql(sql_query, connection)
+        land_offices = offices["LANDOFFICE_ID"]
 
-def clearing_output():
-    pprint("Clear output...")
+        land_offices_df = land_offices.to_json()
+        ti.xcom_push(key='land_offices', value=land_offices_df)
 
+        print(f"Total land office: {land_offices.count()}")
+
+        connection.close()
+    except:
+        print("Get Land office failed!")
+
+def get_column_mapping():
+    try:
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        connection = pyodbc.connect(conn_str)
+
+        sql_query = f"SELECT * FROM TDSERVICE.dbo.DOL_CHANGE_API_MAPPING WHERE property_type = '{property_type}'"
+        mapping = pd.read_sql(sql_query, connection)
+
+        mapping_column_df = mapping.to_json()
+        ti.xcom_push(key='mapping_column', value=mapping_column_df)
+        
+        connection.close()
+        return mapping
+    except:
+        print("Get Mapping column failed!")
+
+def main():
+    token = ti.xcom_pull(key='auth_token')
+    print(f"token -> {token}")
+
+    land_offices_serialize = ti.xcom_pull(key='land_offices')
+    land_offices_df = pd.read_json(land_offices_serialize)
+    print(f"land_offices_df -> {land_offices_df}")
+
+    mapping_column_serialize = ti.xcom_pull(key='mapping_column')
+    mapping_column_df = pd.read_json(mapping_column_serialize)
+    print(f"mapping_column_df -> {mapping_column_df}")
 
 with dag:
-    ingestion_from_api = PythonOperator(
-        task_id='ingestion_from_api',
-        python_callable=ingestion,
+    authentication = PythonOperator(
+        task_id='authentication',
+        python_callable=authenticate,
     )
 
-    load_metadata = PythonOperator(
-        task_id='load_metadata',
-        python_callable=fetch_metadata,
+    get_land_offices = PythonOperator(
+        task_id='get_land_offices',
+        python_callable=get_land_office,
     )
 
-    load_data_to_DB = PythonOperator(
-        task_id='load_data_to_DB',
-        python_callable=load_data_toDB,
+    get_columns_mapping = PythonOperator(
+        task_id='get_columns_mapping',
+        python_callable=get_column_mapping,
     )
 
-    stamp_log = PythonOperator(
-        task_id='stamp_log',
-        python_callable=stamp_logging,
+    ingestion_and_load = PythonOperator(
+        task_id='ingestion_and_load',
+        python_callable=main,
     )
 
-    clear_output = PythonOperator(
-        task_id='clear_output',
-        python_callable=clearing_output,
-    )
-
-ingestion_from_api >> load_metadata >> load_data_to_DB >> stamp_log >> clear_output
+authentication >> get_land_offices >> get_columns_mapping >> ingestion_and_load
