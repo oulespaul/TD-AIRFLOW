@@ -131,6 +131,7 @@ with dag:
     ingestion_and_load = PythonOperator(
         task_id='ingestion_and_load',
         python_callable=ingestion,
+        provide_context=True
     )
 
 authentication >> get_land_offices >> get_columns_mapping >> ingestion_and_load
