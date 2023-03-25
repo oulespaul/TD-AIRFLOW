@@ -42,8 +42,7 @@ dag = DAG('DOL_PARCEL',
           default_args=default_args,
           catchup=False)
 
-def authenticate(**kwargs):
-    ti = kwargs['ti']
+def authenticate():
     HEADERS = {"Consumer-Key": consumer_key}
     PARAMS = {"ConsumerSecret": consumer_secret}
     try:
@@ -56,7 +55,6 @@ def authenticate(**kwargs):
 
         if (response.status_code == 200):
             token = response.json()["token"]
-            ti.xcom_push(key='auth_token', value=token)
             return token
         else:
             return None
@@ -94,9 +92,8 @@ def get_column_mapping():
     except:
         print("Get Mapping column failed!")
 
-def ingestion(**kwargs):
-    ti = kwargs['ti']
-    token = ti.xcom_pull(key='auth_token')
+def ingestion():
+    token = authenticate()
     print(f"token -> {token}")
 
     land_offices = get_land_office()
@@ -106,14 +103,9 @@ def ingestion(**kwargs):
     print(column_mapping.head(5))
 
 with dag:
-    authentication = PythonOperator(
-        task_id='authentication',
-        python_callable=authenticate,
-    )
-
     ingestion_and_load = PythonOperator(
         task_id='ingestion_and_load',
         python_callable=ingestion,
     )
 
-authentication >> ingestion_and_load
+ingestion_and_load
