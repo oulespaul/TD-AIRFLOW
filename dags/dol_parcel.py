@@ -99,7 +99,7 @@ def get_column_mapping(**kwargs):
     except:
         print("Get Mapping column failed!")
 
-def main(**kwargs):
+def ingestion(**kwargs):
     ti = kwargs['ti']
     token = ti.xcom_pull(key='auth_token')
     print(f"token -> {token}")
@@ -130,7 +130,7 @@ with dag:
 
     ingestion_and_load = PythonOperator(
         task_id='ingestion_and_load',
-        python_callable=main,
+        python_callable=ingestion,
     )
 
 authentication >> get_land_offices >> get_columns_mapping >> ingestion_and_load
