@@ -62,21 +62,19 @@ def authenticate():
         print("Authenticate failed!")
 
 def get_land_office():
-    try:
-        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
-        connection = pyodbc.connect(conn_str)
+    conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+    connection = pyodbc.connect(conn_str)
 
-        sql_query = 'SELECT * FROM common.dbo.TB_MAS_LANDOFFICESEQ'
-        offices = pd.read_sql(sql_query, connection)
-        land_offices = offices["LANDOFFICE_ID"]
+    sql_query = 'SELECT * FROM common.dbo.TB_MAS_LANDOFFICESEQ'
+    offices = pd.read_sql(sql_query, connection)
+    land_offices = offices["LANDOFFICE_ID"]
 
-        print(f"Total land office: {land_offices.count()}")
+    print(f"Total land office: {land_offices.count()}")
 
-        connection.close()
+    connection.close()
 
-        return land_offices
-    except:
-        print("Get Land office failed!")
+    return land_offices
+
 
 def get_column_mapping():
     try:
