@@ -29,7 +29,7 @@ server_port = "4070"
 database = 'TRD_Raw'
 username = 'udlake'
 password = 'ekA@lataduat'
-driver= '{SQL Server}'
+driver= '{ODBC Driver 17 for SQL Server}'
 
 default_args = {
     'owner': 'TD',
