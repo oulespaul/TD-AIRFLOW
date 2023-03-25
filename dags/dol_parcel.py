@@ -1,9 +1,8 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.models import Variable
 from datetime import datetime
-from pprint import pprint
 
+import time
 import pytz
 import requests
 import pyodbc
@@ -29,7 +28,7 @@ server_port = "4070"
 database = 'TRD_Raw'
 username = 'udlake'
 password = 'ekA@lataduat'
-driver= '{SQL Server}'
+driver= '{ODBC Driver 17 for SQL Server}'
 
 default_args = {
     'owner': 'TD',
@@ -60,6 +59,37 @@ def authenticate():
             return None
     except:
         print("Authenticate failed!")
+
+def ingestion_data(auth_token, property_type, land_office):
+    HEADERS = {
+        "Consumer-Key": consumer_key,
+        "Authorization": f"Bearer {auth_token}"
+    }
+    PARAMS = {
+        "OptID": "",
+        "OrganizationID": land_office,
+        "Month": "01",
+        "Year": "2566"
+    }
+    try:
+        response = requests.get(
+            url=f"{doi_host}{main_change_path}/{property_type}",
+            params=PARAMS,
+            headers=HEADERS,
+            verify=False
+        )
+
+        if (response.status_code == 200):
+            result = response.json()["result"]
+            result_df = pd.json_normalize(result)
+            data = result_df
+            return data
+        else:
+            print(f"Ingestion Data failed: {response.status_code}")
+            return pd.DataFrame({})
+    except:
+        print("Ingestion Data failed!")
+        return pd.DataFrame({})
 
 def get_land_office():
     try:
@@ -92,6 +122,45 @@ def get_column_mapping():
     except:
         print("Get Mapping column failed!")
 
+def insert_data(sql):
+    try:
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        connection = pyodbc.connect(conn_str)
+
+        connection.execute(sql)
+        connection.commit()
+
+        print("Insert Success!")
+
+        connection.close()
+    except:
+        print("Insert data failed!")
+
+def load_to_lake(data, mapping_column):
+    destination_table = mapping_column['destination_table'][0]
+    destination_column = ','.join(mapping_column['destination_column'].astype(str))
+    source_column = mapping_column['source_column']
+
+    group_index = (data.index // 500)
+
+    # Group the rows by the calculated index
+    grouped_df = data.groupby(group_index)
+
+    # Iterate over the groups
+    for group_name, group_df in grouped_df:
+        print(f"Group {group_name}")
+        values_sql_list = []
+        for _index, row in group_df.iterrows():
+            row_value = []
+            for column in source_column:
+                row_value.append(f"'{row[column]}'")
+            row_value_sql = ",".join(row_value)
+            values_sql_list.append(f"({row_value_sql})")
+        
+        values_sql = ",".join(values_sql_list)
+        insert_sql = f"INSERT INTO {destination_table} ({destination_column}) VALUES {values_sql};"
+        insert_data(insert_sql)
+
 def ingestion():
     token = authenticate()
     print(f"token -> {token}")
@@ -99,8 +168,17 @@ def ingestion():
     land_offices = get_land_office()
     column_mapping = get_column_mapping()
 
-    print(land_offices.head(5))
-    print(column_mapping.head(5))
+    for land_office in land_offices:
+        data = ingestion_data(token, property_type, land_office)
+        data_size = data.shape[0]
+        print(f"{land_office} -> {data_size} items")
+
+        if(data_size == 0):
+            continue
+
+        load_to_lake(data, column_mapping)
+        time.sleep(5)
+
 
 with dag:
     ingestion_and_load = PythonOperator(
