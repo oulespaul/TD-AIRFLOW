@@ -63,8 +63,7 @@ def authenticate(**kwargs):
     except:
         print("Authenticate failed!")
 
-def get_land_office(**kwargs):
-    ti = kwargs['ti']
+def get_land_office():
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
         connection = pyodbc.connect(conn_str)
@@ -73,17 +72,15 @@ def get_land_office(**kwargs):
         offices = pd.read_sql(sql_query, connection)
         land_offices = offices["LANDOFFICE_ID"]
 
-        land_offices_df = land_offices.to_json()
-        ti.xcom_push(key='land_offices', value=land_offices_df)
-
         print(f"Total land office: {land_offices.count()}")
 
         connection.close()
+
+        return land_offices
     except:
         print("Get Land office failed!")
 
-def get_column_mapping(**kwargs):
-    ti = kwargs['ti']
+def get_column_mapping():
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
         connection = pyodbc.connect(conn_str)
@@ -91,10 +88,8 @@ def get_column_mapping(**kwargs):
         sql_query = f"SELECT * FROM TDSERVICE.dbo.DOL_CHANGE_API_MAPPING WHERE property_type = '{property_type}'"
         mapping = pd.read_sql(sql_query, connection)
 
-        mapping_column_df = mapping.to_json()
-        ti.xcom_push(key='mapping_column', value=mapping_column_df)
-        
         connection.close()
+
         return mapping
     except:
         print("Get Mapping column failed!")
@@ -104,13 +99,11 @@ def ingestion(**kwargs):
     token = ti.xcom_pull(key='auth_token')
     print(f"token -> {token}")
 
-    land_offices_serialize = ti.xcom_pull(key='land_offices')
-    land_offices_df = pd.read_json(land_offices_serialize)
-    print(f"land_offices_df -> {land_offices_df}")
+    land_offices = get_land_office()
+    column_mapping = get_column_mapping()
 
-    mapping_column_serialize = ti.xcom_pull(key='mapping_column')
-    mapping_column_df = pd.read_json(mapping_column_serialize)
-    print(f"mapping_column_df -> {mapping_column_df}")
+    print(land_offices.head(5))
+    print(column_mapping.head(5))
 
 with dag:
     authentication = PythonOperator(
@@ -118,20 +111,9 @@ with dag:
         python_callable=authenticate,
     )
 
-    get_land_offices = PythonOperator(
-        task_id='get_land_offices',
-        python_callable=get_land_office,
-    )
-
-    get_columns_mapping = PythonOperator(
-        task_id='get_columns_mapping',
-        python_callable=get_column_mapping,
-    )
-
     ingestion_and_load = PythonOperator(
         task_id='ingestion_and_load',
         python_callable=ingestion,
-        provide_context=True
     )
 
-authentication >> get_land_offices >> get_columns_mapping >> ingestion_and_load
+authentication >> ingestion_and_load
