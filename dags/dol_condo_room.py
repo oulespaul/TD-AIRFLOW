@@ -163,14 +163,18 @@ def load_to_lake(data, mapping_column):
 
 def ingestion(**kwargs):
     triggerParams = kwargs["params"]
-    yearTrigger = triggerParams["year"]
-    monthTrigger = triggerParams["month"]
+    year = ingest_date.year + 543
+    month = ingest_date.strftime('%m')
+
+    print(f"year -> {year}")
+    print(f"month -> {month}")
+
+    yearTrigger = triggerParams.get("year", year)
+    monthTrigger = triggerParams.get("month", month)
 
     print(f"trigger -> {yearTrigger}:{monthTrigger}")
 
-    year = yearTrigger or ingest_date.year + 543
 
-    print(f"year -> {year}")
     # token = authenticate()
     # print(f"token -> {token}")
 
