@@ -60,7 +60,7 @@ def authenticate():
     except:
         print("Authenticate failed!")
 
-def ingestion_data(auth_token, property_type, land_office):
+def ingestion_data(auth_token, property_type, land_office, yearTrigger, monthTrigger):
     HEADERS = {
         "Consumer-Key": consumer_key,
         "Authorization": f"Bearer {auth_token}"
@@ -68,8 +68,8 @@ def ingestion_data(auth_token, property_type, land_office):
     PARAMS = {
         "OptID": "",
         "OrganizationID": land_office,
-        "Month": "01",
-        "Year": "2566"
+        "Month": monthTrigger,
+        "Year": yearTrigger
     }
     try:
         response = requests.get(
@@ -161,7 +161,16 @@ def load_to_lake(data, mapping_column):
         insert_sql = f"INSERT INTO {destination_table} ({destination_column}) VALUES {values_sql};"
         insert_data(insert_sql)
 
-def ingestion():
+def ingestion(**kwargs):
+    triggerParams = kwargs["params"]
+    year = ingest_date.year + 543
+    month = ingest_date.strftime('%m')
+
+    yearTrigger = triggerParams.get("year", year)
+    monthTrigger = triggerParams.get("month", month)
+
+    print(f"trigger -> {yearTrigger}:{monthTrigger}")
+
     token = authenticate()
     print(f"token -> {token}")
 
@@ -169,7 +178,7 @@ def ingestion():
     column_mapping = get_column_mapping()
 
     for land_office in land_offices:
-        data = ingestion_data(token, property_type, land_office)
+        data = ingestion_data(token, property_type, land_office, yearTrigger, monthTrigger)
         data_size = data.shape[0]
         print(f"{land_office} -> {data_size} items")
 
