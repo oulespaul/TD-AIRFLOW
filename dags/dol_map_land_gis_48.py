@@ -171,13 +171,13 @@ def ingestion(**kwargs):
 
     print(f"trigger -> {yearTrigger}:{monthTrigger}")
 
-    token = authenticate()
-    print(f"token -> {token}")
-
     land_offices = get_land_office()
     column_mapping = get_column_mapping()
 
     for land_office in land_offices:
+        token = authenticate()
+        print(f"token -> {token}")
+        
         data = ingestion_data(token, property_type, land_office, yearTrigger, monthTrigger)
         data_size = data.shape[0]
         print(f"{land_office} -> {data_size} items")

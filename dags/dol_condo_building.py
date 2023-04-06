@@ -161,15 +161,24 @@ def load_to_lake(data, mapping_column):
         insert_sql = f"INSERT INTO {destination_table} ({destination_column}, IMPORT_DATE) VALUES {values_sql};"
         insert_data(insert_sql)
 
-def ingestion():
-    token = authenticate()
-    print(f"token -> {token}")
+def ingestion(**kwargs):
+    triggerParams = kwargs["params"]
+    year = ingest_date.year + 543
+    month = ingest_date.strftime('%m')
+
+    yearTrigger = triggerParams.get("year", year)
+    monthTrigger = triggerParams.get("month", month)
+
+    print(f"trigger -> {yearTrigger}:{monthTrigger}")
 
     land_offices = get_land_office()
     column_mapping = get_column_mapping()
 
     for land_office in land_offices:
-        data = ingestion_data(token, property_type, land_office)
+        token = authenticate()
+        print(f"token -> {token}")
+        
+        data = ingestion_data(token, property_type, land_office, yearTrigger, monthTrigger)
         data_size = data.shape[0]
         print(f"{land_office} -> {data_size} items")
 
