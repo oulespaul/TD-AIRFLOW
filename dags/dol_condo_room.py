@@ -155,10 +155,10 @@ def load_to_lake(data, mapping_column):
             for column in source_column:
                 row_value.append(f"'{row[column]}'")
             row_value_sql = ",".join(row_value)
-            values_sql_list.append(f"({row_value_sql})")
+            values_sql_list.append(f"({row_value_sql}, CURRENT_TIMESTAMP)")
         
         values_sql = ",".join(values_sql_list)
-        insert_sql = f"INSERT INTO {destination_table} ({destination_column}) VALUES {values_sql};"
+        insert_sql = f"INSERT INTO {destination_table} ({destination_column}, IMPORT_DATE) VALUES {values_sql};"
         insert_data(insert_sql)
 
 def ingestion(**kwargs):
