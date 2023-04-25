@@ -153,7 +153,7 @@ def load_to_lake(data, mapping_column):
         for _index, row in group_df.iterrows():
             row_value = []
             for column in source_column:
-                row_value.append(f"'{row[column]}'")
+                row_value.append(f"'{row.get(column, '')}'")
             row_value_sql = ",".join(row_value)
             values_sql_list.append(f"({row_value_sql}, CURRENT_TIMESTAMP)")
         
