@@ -60,7 +60,7 @@ def authenticate():
     except:
         print("Authenticate failed!")
 
-def ingestion_data(auth_token, property_type, land_office):
+def ingestion_data(auth_token, property_type, land_office, yearTrigger, monthTrigger):
     HEADERS = {
         "Consumer-Key": consumer_key,
         "Authorization": f"Bearer {auth_token}"
@@ -68,8 +68,8 @@ def ingestion_data(auth_token, property_type, land_office):
     PARAMS = {
         "OptID": "",
         "OrganizationID": land_office,
-        "Month": "01",
-        "Year": "2566"
+        "Month": monthTrigger,
+        "Year": yearTrigger
     }
     try:
         response = requests.get(
