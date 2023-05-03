@@ -30,7 +30,7 @@ default_args = {
     'schedule_interval': None,
 }
 
-dag = DAG('DOL_REVOKE_CHANGE_LAND_PRICE_PARCEL',
+dag = DAG('POST_DOL_REVOKE_CHANGE_LAND_PRICE_PARCEL',
           schedule_interval='@yearly',
           default_args=default_args,
           catchup=False)
@@ -121,7 +121,7 @@ def get_column_mapping():
     except:
         print("Get Mapping column failed!")
 
-def post_to_dol(auth_token, property_type, data):
+def post_to_dol(auth_token, data):
     HEADERS = {
         "Content-Type": "application/json",
         "Consumer-Key": consumer_key,
@@ -163,7 +163,7 @@ def update_post_status(id, status):
 
 def process():
     data = retrive_data_from_db()
-    mappings = get_column_mapping(property_type)
+    mappings = get_column_mapping()
 
     mapped_df = data.rename(columns=mappings.set_index('destination_column')['source_column']).astype(
         {
@@ -180,7 +180,7 @@ def process():
 
     for item in list:
         auth_token = authenticate()
-        res = post_to_dol(auth_token, property_type, json.dumps(item))
+        res = post_to_dol(auth_token, json.dumps(item))
 
         id = item["PARCEL_VAL_ID"]
         print(f"Id: {id} -> Post Success : {res}")
