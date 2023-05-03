@@ -81,7 +81,7 @@ def ingestion_data(property_type, land_office, auth_token, yearTrigger, monthTri
             result = response.json()
             result_df = pd.json_normalize(result)
             data = result_df
-            return data
+            return data.fillna('')
         else:
             print(f"Ingestion Data failed: {response.status_code}")
             return pd.DataFrame({})
