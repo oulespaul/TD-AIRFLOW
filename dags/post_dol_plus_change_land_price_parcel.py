@@ -8,7 +8,7 @@ import json
 import pandas as pd
 
 #Config
-property_type = "RevokeChangeLandPriceParcel"
+property_type = "PlusChangeLandPriceParcel"
 
 doi_host = "https://10.13.16.166"
 auth_path = "/api/v1/Auth/Validate"
@@ -30,8 +30,8 @@ default_args = {
     'schedule_interval': None,
 }
 
-dag = DAG('DOL_REVOKE_CHANGE_LAND_PRICE_PARCEL',
-          schedule_interval='@yearly',
+dag = DAG('POST_DOL_PLUS_CHANGE_LAND_PRICE_PARCEL',
+          schedule_interval='@daily',
           default_args=default_args,
           catchup=False)
 
@@ -59,7 +59,7 @@ def retrive_data_from_db():
         connection = pyodbc.connect(conn_str)
 
         sql_query = """
-        SELECT
+        SELECT 
             A.PARCEL_VAL_ID,
             '2566' AS LANDPRICE_START_YEAR,
             '2569' AS LANDPRICE_END_YEAR,
@@ -83,7 +83,7 @@ def retrive_data_from_db():
             FROM (
             (SELECT * FROM land.dbo.PARCEL_VAL_10)A
             INNER JOIN
-            (SELECT * FROM land.dbo.ORDER_VAL_REVOKE )B
+            (SELECT * FROM land.dbo.ORDER_VAL)B
                 ON A.REMARK_FOLDER = B.REMARK_FOLDER
                     AND A.BRANCH_CODE = B.BRANCH_CODE
             )
@@ -95,7 +95,7 @@ def retrive_data_from_db():
                 AND A.FLAG_TYPE = 1
                 AND A.REMARK_FOLDER IS NOT NULL
                 AND A.FLAG_COMMIT = 'Y' 
-                AND A.[STATUS] = 'REVOKE'
+                AND A.[STATUS] in ('PLUS','PLUSS')
                 AND B.ORDER_STATUS = 1
                 AND A.POST_DOL IN (1,2);
 """
@@ -121,7 +121,7 @@ def get_column_mapping():
     except:
         print("Get Mapping column failed!")
 
-def post_to_dol(auth_token, property_type, data):
+def post_to_dol(auth_token, data):
     HEADERS = {
         "Content-Type": "application/json",
         "Consumer-Key": consumer_key,
@@ -163,7 +163,7 @@ def update_post_status(id, status):
 
 def process():
     data = retrive_data_from_db()
-    mappings = get_column_mapping(property_type)
+    mappings = get_column_mapping()
 
     mapped_df = data.rename(columns=mappings.set_index('destination_column')['source_column']).astype(
         {
@@ -180,7 +180,7 @@ def process():
 
     for item in list:
         auth_token = authenticate()
-        res = post_to_dol(auth_token, property_type, json.dumps(item))
+        res = post_to_dol(auth_token, json.dumps(item))
 
         id = item["PARCEL_VAL_ID"]
         print(f"Id: {id} -> Post Success : {res}")
