@@ -174,7 +174,7 @@ def transform_data(data):
             sql_coordinates = sql_coordinates[:-1] + '))' + "', 0)"
 
             feature['geometry'] = sql_coordinates
-            feature_df = pd.concat([feature_df, pd.json_normalize(feature)], ignore_index=True)
+            feature_df = pd.concat([feature_df, pd.json_normalize(feature)], ignore_index=True).fillna('')
 
     return feature_df
 
