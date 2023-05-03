@@ -53,20 +53,18 @@ def authenticate():
         )
 
         if (response.status_code == 200):
-            token = response.json()["token"]
-            return token
+            return response.json()["token"]
         else:
             return None
     except:
         print("Authenticate failed!")
 
-def ingestion_data(auth_token, property_type, land_office, yearTrigger, monthTrigger):
+def ingestion_data(property_type, land_office, auth_token, yearTrigger, monthTrigger):
     HEADERS = {
         "Consumer-Key": consumer_key,
         "Authorization": f"Bearer {auth_token}"
     }
     PARAMS = {
-        "OptID": "",
         "OrganizationID": land_office,
         "Month": monthTrigger,
         "Year": yearTrigger
@@ -80,7 +78,7 @@ def ingestion_data(auth_token, property_type, land_office, yearTrigger, monthTri
         )
 
         if (response.status_code == 200):
-            result = response.json()["result"]
+            result = response.json()
             result_df = pd.json_normalize(result)
             data = result_df
             return data
@@ -99,16 +97,13 @@ def get_land_office():
         sql_query = 'SELECT * FROM common.dbo.TB_MAS_LANDOFFICESEQ'
         offices = pd.read_sql(sql_query, connection)
         land_offices = offices["LANDOFFICE_ID"]
-
         print(f"Total land office: {land_offices.count()}")
-
         connection.close()
-
         return land_offices
     except:
         print("Get Land office failed!")
 
-def get_column_mapping():
+def get_column_mapping(property_type):
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
         connection = pyodbc.connect(conn_str)
@@ -117,24 +112,9 @@ def get_column_mapping():
         mapping = pd.read_sql(sql_query, connection)
 
         connection.close()
-
         return mapping
     except:
         print("Get Mapping column failed!")
-
-def insert_data(sql):
-    try:
-        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
-        connection = pyodbc.connect(conn_str)
-
-        connection.execute(sql)
-        connection.commit()
-
-        print("Insert Success!")
-
-        connection.close()
-    except:
-        print("Insert data failed!")
 
 def load_to_lake(data, mapping_column):
     destination_table = mapping_column['destination_table'][0]
@@ -153,13 +133,50 @@ def load_to_lake(data, mapping_column):
         for _index, row in group_df.iterrows():
             row_value = []
             for column in source_column:
-                row_value.append(f"'{row.get(column, '')}'")
+                value = f"'{row[column]}'" if column != "geometry" else f"{row[column]}"
+                row_value.append(value)
             row_value_sql = ",".join(row_value)
             values_sql_list.append(f"({row_value_sql}, CURRENT_TIMESTAMP)")
         
         values_sql = ",".join(values_sql_list)
         insert_sql = f"INSERT INTO {destination_table} ({destination_column}, IMPORT_DATE) VALUES {values_sql};"
+
         insert_data(insert_sql)
+
+def insert_data(sql):
+    try:
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        connection = pyodbc.connect(conn_str)
+
+        connection.execute(sql)
+        connection.commit()
+
+        print("Insert Success!")
+
+        connection.close()
+    except:
+        print("Insert data failed!")
+
+def transform_data(data):
+    feature_df = pd.DataFrame()
+    gis_features = data.get('LocationGeospatial.features')
+
+    for feature in gis_features[0]:
+        coordinates = feature['geometry']['coordinates']
+
+        for polygon in coordinates:
+            sql_coordinates = ''
+
+            sql_coordinates += "geometry::STGeomFromText('POLYGON (("
+            for point in polygon:
+                sql_coordinates += f"{str(point[0])} {str(point[1])},"
+            # Remove the trailing comma and add closing parentheses for the polygon
+            sql_coordinates = sql_coordinates[:-1] + '))' + "', 0)"
+
+            feature['geometry'] = sql_coordinates
+            feature_df = pd.concat([feature_df, pd.json_normalize(feature)], ignore_index=True)
+
+    return feature_df
 
 def ingestion(**kwargs):
     triggerParams = kwargs["params"]
@@ -171,23 +188,20 @@ def ingestion(**kwargs):
 
     print(f"trigger -> {yearTrigger}:{monthTrigger}")
 
+    auth_token = authenticate()
     land_offices = get_land_office()
-    column_mapping = get_column_mapping()
-
-    for land_office in land_offices:
-        token = authenticate()
-        print(f"token -> {token}")
-        
-        data = ingestion_data(token, property_type, land_office, yearTrigger, monthTrigger)
+    mapping = get_column_mapping(property_type)
+    
+    for land_office in land_offices[:1]:
+        data = ingestion_data(property_type, land_office, auth_token, yearTrigger, monthTrigger)
         data_size = data.shape[0]
         print(f"{land_office} -> {data_size} items")
 
         if(data_size == 0):
             continue
-
-        load_to_lake(data, column_mapping)
+        data_transformed = transform_data(data)
+        load_to_lake(data_transformed, mapping)
         time.sleep(5)
-
 
 with dag:
     ingestion_and_load = PythonOperator(
