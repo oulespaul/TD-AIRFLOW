@@ -36,7 +36,7 @@ default_args = {
     'schedule_interval': None,
 }
 
-dag = DAG('DOL_MAP_LAND_GIS_48',
+dag = DAG('DOL_MAP_LAND_NS3A_47',
           schedule_interval='@yearly',
           default_args=default_args,
           catchup=False)
