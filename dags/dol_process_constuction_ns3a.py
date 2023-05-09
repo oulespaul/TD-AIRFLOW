@@ -14,7 +14,7 @@ output_path = "/opt/airflow/dags/output/moc_api"
 ingest_date = datetime.now(tz=tzInfo)
 
 #Config
-property_type = "ProcessConstuctionNS3A"
+property_type = "ProcessConstructionNS3A"
 
 doi_host = "https://10.13.16.166"
 auth_path = "/api/v1/Auth/Validate"
