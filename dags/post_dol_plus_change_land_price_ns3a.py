@@ -169,12 +169,18 @@ def process():
 
     mapped_df = data.rename(columns=mappings.set_index('destination_column')['source_column']).astype(
         {
-            "AIRPHOTO_MAP1": str,
-            "AIRPHOTO_MAP2": str,
-            "AIRPHOTO_MAP3": str,
+            "AIRPHOTO_MAP1": int,
+            "AIRPHOTO_MAP2": int,
+            "AIRPHOTO_MAP3": int,
             "AIRPHOTO_LANDNO": int,
             "NS3A_NO": int,
             "VAL_P_WA": int,
+        }
+    ).astype(
+        {
+            "AIRPHOTO_MAP1": str,
+            "AIRPHOTO_MAP2": str,
+            "AIRPHOTO_MAP3": str,
         }
     )
     mapped_df = mapped_df.fillna("")
