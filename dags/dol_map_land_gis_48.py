@@ -163,13 +163,15 @@ def transform_data(data):
 
     for feature in gis_features[0]:
         coordinates = feature['geometry']['coordinates']
+        if(coordinates is None):
+            continue
 
         for polygon in coordinates:
             sql_coordinates = ''
 
             sql_coordinates += "geometry::STGeomFromText('POLYGON (("
             for point in polygon:
-                sql_coordinates += f"{str(point[0])} {str(point[1])},"
+                sql_coordinates += f"{point[0]} {point[1]},"
             # Remove the trailing comma and add closing parentheses for the polygon
             sql_coordinates = sql_coordinates[:-1] + '))' + "', 0)"
 
