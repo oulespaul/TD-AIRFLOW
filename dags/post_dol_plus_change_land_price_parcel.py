@@ -17,12 +17,12 @@ main_change_path = "/apiExchange/v1/Change"
 consumer_secret = "cs_mw1NAJU1pqNQkZVlXdVNvoCO6zutNkqXuSxcFdQ7Y2J"
 consumer_key = "ck_bwTrnf24CssYIV7EzHxC5trFB07ioRggKl6NkWEwZu9"
 
-server_host = '192.168.45.83'
-server_port = "4070"
+server_host = '192.168.41.31'
+server_port = '1433'
 database = 'TRD_Raw'
-username = 'udlake'
-password = 'ekA@lataduat'
-driver= '{ODBC Driver 17 for SQL Server}'
+username = 'sa'
+password = 'TRDl;ylfuKUB'
+driver = '{ODBC Driver 17 for SQL Server}'
 
 default_args = {
     'owner': 'TD',

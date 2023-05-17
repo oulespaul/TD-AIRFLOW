@@ -2,12 +2,13 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
 
+import time
 import requests
 import pyodbc
 import json
 import pandas as pd
 
-#Config
+# Config
 property_type = "PlusChangeLandPriceNS3A"
 
 doi_host = "https://10.13.16.166"
@@ -17,12 +18,12 @@ main_change_path = "/apiExchange/v1/Change"
 consumer_secret = "cs_mw1NAJU1pqNQkZVlXdVNvoCO6zutNkqXuSxcFdQ7Y2J"
 consumer_key = "ck_bwTrnf24CssYIV7EzHxC5trFB07ioRggKl6NkWEwZu9"
 
-server_host = '192.168.45.83'
-server_port = "4070"
+server_host = '192.168.41.31'
+server_port = '1433'
 database = 'TRD_Raw'
-username = 'udlake'
-password = 'ekA@lataduat'
-driver= '{ODBC Driver 17 for SQL Server}'
+username = 'sa'
+password = 'TRDl;ylfuKUB'
+driver = '{ODBC Driver 17 for SQL Server}'
 
 default_args = {
     'owner': 'TD',
@@ -34,6 +35,7 @@ dag = DAG('POST_DOL_PLUS_CHANGE_LAND_PRICE_NS3A',
           schedule_interval='@daily',
           default_args=default_args,
           catchup=False)
+
 
 def authenticate():
     HEADERS = {"Consumer-Key": consumer_key}
@@ -53,12 +55,14 @@ def authenticate():
     except:
         print("Authenticate failed!")
 
-def retrive_data_from_db():
+
+def retrive_data_from_db(land_office):
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
         connection = pyodbc.connect(conn_str)
+        table_landoffice = land_office[:2]
 
-        sql_query = """
+        sql_query = f"""
             SELECT
             A.NS3A_VAL_ID,
             '2566' AS LANDPRICE_START_YEAR,
@@ -83,14 +87,14 @@ def retrive_data_from_db():
             END LAND_AREA_T,
             A.VAL_P_WA
             FROM (
-            (SELECT * FROM land.dbo.NS3A_VAL_83)A
+            (SELECT * FROM land.dbo.NS3A_VAL_{table_landoffice})A
             INNER JOIN
             (SELECT * FROM land.dbo.ORDER_VAL )B
                 ON A.REMARK_FOLDER = B.REMARK_FOLDER
                     AND A.BRANCH_CODE = B.BRANCH_CODE
             )
             WHERE 1=1
-                AND A.BRANCH_CODE = '83010000'
+                AND A.BRANCH_CODE = '{land_office}'
                     AND A.PERIODS_ID = 7
                     AND A.MAPZONE IN (47 , 48)
                     AND A.FLAG_PUBLIC = 1 
@@ -109,6 +113,7 @@ def retrive_data_from_db():
     except:
         print("Get Data failed!")
 
+
 def get_column_mapping():
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
@@ -122,6 +127,7 @@ def get_column_mapping():
         return mapping
     except:
         print("Get Mapping column failed!")
+
 
 def post_to_dol(auth_token, data):
     HEADERS = {
@@ -147,12 +153,15 @@ def post_to_dol(auth_token, data):
         print("Post Data failed!")
         return False
 
-def update_post_status(id, status):
+
+def update_post_status(id, status, land_office):
+    table_landoffice = land_office[:2]
+
     try:
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
         connection = pyodbc.connect(conn_str)
 
-        sql = f"UPDATE land.dbo.NS3A_VAL_83 SET POST_DOL = {status}  WHERE NS3A_VAL_ID = '{id}'"
+        sql = f"UPDATE land.dbo.NS3A_VAL_{table_landoffice} SET POST_DOL = {status}  WHERE NS3A_VAL_ID = '{id}'"
 
         connection.execute(sql)
         connection.commit()
@@ -163,35 +172,69 @@ def update_post_status(id, status):
     except:
         print("Update status data failed!")
 
+def get_land_office():
+    try:
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        connection = pyodbc.connect(conn_str)
+
+        sql_query = 'SELECT * FROM common.dbo.TB_MAS_LANDOFFICESEQ'
+        offices = pd.read_sql(sql_query, connection)
+        land_offices = offices["LANDOFFICE_ID"]
+
+        print(f"Total land office: {land_offices.count()}")
+
+        connection.close()
+
+        return land_offices
+    except:
+        print("Get Land office failed!")
+
+
 def process():
-    data = retrive_data_from_db()
     mappings = get_column_mapping()
+    land_offices = get_land_office()
 
-    mapped_df = data.rename(columns=mappings.set_index('destination_column')['source_column']).astype(
-        {
-            "AIRPHOTO_MAP1": str,
-            "AIRPHOTO_MAP2": str,
-            "AIRPHOTO_MAP3": str,
-            "AIRPHOTO_LANDNO": int,
-            "NS3A_NO": int,
-            "VAL_P_WA": int,
-        }
-    )
-    mapped_df = mapped_df.fillna("")
-    records = mapped_df.to_json(orient='records')
-    list = json.loads(records)
+    for land_office in land_offices:
+        data = retrive_data_from_db(land_office)
+        data_size = data.shape[0]
+        print(f"{land_office} -> {data_size} items")
 
-    for item in list:
-        auth_token = authenticate()
-        res = post_to_dol(auth_token, json.dumps(item))
+        if(data_size == 0):
+            continue
 
-        id = item["NS3A_VAL_ID"]
-        print(f"Id: {id} -> Post Success : {res}")
+        mapped_df = data.rename(columns=mappings.set_index('destination_column')['source_column']).astype(
+            {
+                "AIRPHOTO_MAP1": int,
+                "AIRPHOTO_MAP2": int,
+                "AIRPHOTO_MAP3": int,
+                "AIRPHOTO_LANDNO": int,
+                "NS3A_NO": int,
+                "VAL_P_WA": int,
+            }
+        ).astype(
+            {
+                "AIRPHOTO_MAP1": str,
+                "AIRPHOTO_MAP2": str,
+                "AIRPHOTO_MAP3": str,
+            }
+        )
+        mapped_df = mapped_df.fillna("")
+        records = mapped_df.to_json(orient='records')
+        list = json.loads(records)
 
-        if (res == True):
-            update_post_status(id, 3)
-        else:
-            update_post_status(id, 2)
+        for item in list:
+            auth_token = authenticate()
+            res = post_to_dol(auth_token, json.dumps(item))
+
+            id = item["NS3A_VAL_ID"]
+            print(f"Id: {id} -> Post Success : {res}")
+
+            if (res == True):
+                update_post_status(id, 3)
+            else:
+                update_post_status(id, 2)
+        
+        time.sleep(5)
 
 
 with dag:
