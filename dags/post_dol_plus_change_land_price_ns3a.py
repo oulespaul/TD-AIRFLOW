@@ -206,6 +206,7 @@ def process():
         if(data_size == 0):
             continue
 
+        data = data.fillna("")
         mapped_df = data.rename(columns=mappings.set_index('destination_column')['source_column']).astype(
             {
                 "AIRPHOTO_MAP1": int,
