@@ -234,9 +234,9 @@ def process():
             print(f"Id: {id} -> Post Success : {res}")
 
             if (res == True):
-                update_post_status(id, 3)
+                update_post_status(id, 3, land_office)
             else:
-                update_post_status(id, 2)
+                update_post_status(id, 2, land_office)
         
         time.sleep(5)
 
