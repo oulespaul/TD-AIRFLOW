@@ -20,7 +20,7 @@ consumer_key = "ck_bwTrnf24CssYIV7EzHxC5trFB07ioRggKl6NkWEwZu9"
 
 server_host = '192.168.41.31'
 server_port = '1433'
-database = 'TRD_Raw'
+database = 'master'
 username = 'sa'
 password = 'TRDl;ylfuKUB'
 driver = '{ODBC Driver 17 for SQL Server}'
@@ -58,7 +58,7 @@ def authenticate():
 
 def retrive_data_from_db(land_office):
     try:
-        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD=" + "{" + password + "}"
         connection = pyodbc.connect(conn_str)
         table_landoffice = land_office[:2]
 
@@ -110,13 +110,14 @@ def retrive_data_from_db(land_office):
         connection.close()
 
         return result
-    except:
+    except Exception as e:
         print("Get Data failed!")
+        print(e)
 
 
 def get_column_mapping():
     try:
-        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD=" + "{" + password + "}"
         connection = pyodbc.connect(conn_str)
 
         sql_query = f"SELECT * FROM TDSERVICE.dbo.DOL_CHANGE_API_MAPPING_POST WHERE property_type = '{property_type}'"
@@ -125,8 +126,9 @@ def get_column_mapping():
         connection.close()
 
         return mapping
-    except:
+    except Exception as e:
         print("Get Mapping column failed!")
+        print(e)
 
 
 def post_to_dol(auth_token, data):
@@ -149,8 +151,9 @@ def post_to_dol(auth_token, data):
         else:
             print(f"Post Data failed: {response.status_code}")
             return False
-    except:
+    except Exception as e:
         print("Post Data failed!")
+        print(e)
         return False
 
 
@@ -158,7 +161,7 @@ def update_post_status(id, status, land_office):
     table_landoffice = land_office[:2]
 
     try:
-        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD=" + "{" + password + "}"
         connection = pyodbc.connect(conn_str)
 
         sql = f"UPDATE land.dbo.NS3A_VAL_{table_landoffice} SET POST_DOL = {status}  WHERE NS3A_VAL_ID = '{id}'"
@@ -169,12 +172,13 @@ def update_post_status(id, status, land_office):
         print("Update status Success!")
 
         connection.close()
-    except:
+    except Exception as e:
         print("Update status data failed!")
+        print(e)
 
 def get_land_office():
     try:
-        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD={password}"
+        conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD=" + "{" + password + "}"
         connection = pyodbc.connect(conn_str)
 
         sql_query = 'SELECT * FROM common.dbo.TB_MAS_LANDOFFICESEQ'
@@ -186,9 +190,9 @@ def get_land_office():
         connection.close()
 
         return land_offices
-    except:
+    except Exception as e:
         print("Get Land office failed!")
-
+        print(e)
 
 def process():
     mappings = get_column_mapping()
