@@ -31,7 +31,7 @@ default_args = {
     'schedule_interval': None,
 }
 
-dag = DAG('POST_DOL_PLUS_CHANGE_LAND_PRICE_PARCEL',
+dag = DAG('POST_DOL_REVOKE_CHANGE_LAND_PRICE_NS3A',
           schedule_interval='@daily',
           default_args=default_args,
           catchup=False)
