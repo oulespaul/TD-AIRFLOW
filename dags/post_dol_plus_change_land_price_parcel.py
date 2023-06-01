@@ -96,7 +96,6 @@ def retrive_data_from_db(land_office):
                     AND A.PERIODS_ID = 7
                     AND A.MAPZONE IN (47 , 48)
                     AND A.FLAG_PUBLIC = 1 
-                AND A.FLAG_TYPE = 1
                 AND A.REMARK_FOLDER IS NOT NULL
                 AND A.FLAG_COMMIT = 'Y' 
                 AND A.[STATUS] in ('PLUS','PLUSS')
