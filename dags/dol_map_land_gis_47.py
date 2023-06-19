@@ -79,6 +79,10 @@ def ingestion_data(property_type, land_office, auth_token, yearTrigger, monthTri
 
         if (response.status_code == 200):
             result = response.json()
+            
+            if(result == None):
+                return pd.DataFrame({})
+            
             result_df = pd.json_normalize(result)
             data = result_df
             return data.fillna('')
