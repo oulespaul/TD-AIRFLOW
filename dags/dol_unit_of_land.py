@@ -168,10 +168,16 @@ def ingestion(**kwargs):
 
     yearTrigger = triggerParams.get("year", year)
     monthTrigger = triggerParams.get("month", month)
+    manualLandOffice = triggerParams.get("land_office")
 
     print(f"trigger -> {yearTrigger}:{monthTrigger}")
+    print(f"manualLandOffice -> {manualLandOffice}")
 
-    land_offices = get_land_office()
+    if(manualLandOffice is None):
+        land_offices = get_land_office()
+    else:
+        land_offices = [manualLandOffice]
+
     column_mapping = get_column_mapping()
 
     for land_office in land_offices:
