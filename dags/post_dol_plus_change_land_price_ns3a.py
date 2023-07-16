@@ -163,7 +163,7 @@ def update_post_status(id, status, land_office):
         conn_str = f"DRIVER={driver};SERVER={server_host},{server_port};DATABASE={database};UID={username};PWD=" + "{" + password + "}"
         connection = pyodbc.connect(conn_str)
 
-        sql = f"UPDATE land.dbo.NS3A_VAL_{table_landoffice} SET POST_DOL = {status}  WHERE NS3A_VAL_ID = '{id}'"
+        sql = f"UPDATE land.dbo.NS3A_VAL_{table_landoffice} SET POST_DOL = {status}, SEND_DATE = GETDATE()  WHERE NS3A_VAL_ID = '{id}'"
 
         connection.execute(sql)
         connection.commit()
