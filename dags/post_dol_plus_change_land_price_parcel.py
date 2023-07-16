@@ -27,7 +27,6 @@ driver= '{ODBC Driver 17 for SQL Server}'
 default_args = {
     'owner': 'TD',
     'start_date': datetime(2022, 8, 23),
-    'schedule_interval': None,
 }
 
 dag = DAG('POST_DOL_PLUS_CHANGE_LAND_PRICE_PARCEL',

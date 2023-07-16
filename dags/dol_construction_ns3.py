@@ -33,7 +33,6 @@ driver= '{ODBC Driver 17 for SQL Server}'
 default_args = {
     'owner': 'TD',
     'start_date': datetime(2022, 8, 23),
-    'schedule_interval': None,
 }
 
 dag = DAG('DOL_CONSTRUCTION_NS3',
