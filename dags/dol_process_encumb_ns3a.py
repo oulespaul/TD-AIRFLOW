@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_PROCESS_ENCUMB_NS3A',
-          schedule_interval='@yearly',
+          schedule_interval='0 20 4 * *',
           default_args=default_args,
           catchup=False)
 
@@ -164,7 +164,7 @@ def load_to_lake(data, mapping_column):
 def ingestion(**kwargs):
     triggerParams = kwargs["params"]
     year = ingest_date.year + 543
-    month = ingest_date.strftime('%m')
+    month = int(ingest_date.strftime('%m')) - 1
 
     yearTrigger = triggerParams.get("year", year)
     monthTrigger = triggerParams.get("month", month)

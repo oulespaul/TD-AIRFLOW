@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_MAP_LAND_NS3A_47',
-          schedule_interval='@yearly',
+          schedule_interval='0 11 4 * *',
           default_args=default_args,
           catchup=False)
 
@@ -187,7 +187,7 @@ def transform_data(data):
 def ingestion(**kwargs):
     triggerParams = kwargs["params"]
     year = ingest_date.year + 543
-    month = ingest_date.strftime('%m')
+    month = int(ingest_date.strftime('%m')) - 1
 
     yearTrigger = triggerParams.get("year", year)
     monthTrigger = triggerParams.get("month", month)
