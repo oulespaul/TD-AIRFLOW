@@ -32,7 +32,7 @@ driver= '{ODBC Driver 17 for SQL Server}'
 
 default_args = {
     'owner': 'TD',
-    'start_date': datetime(2023, 8, 01),
+    'start_date': datetime(2023, 8, 1),
 }
 
 dag = DAG('DOL_CONDO_BUILDING',
