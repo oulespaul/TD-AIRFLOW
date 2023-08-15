@@ -32,13 +32,13 @@ driver= '{ODBC Driver 17 for SQL Server}'
 
 default_args = {
     'owner': 'TD',
-    'start_date': datetime(2022, 8, 23),
+    'start_date': datetime(2023, 8, 01),
 }
 
 dag = DAG('DOL_CONDO_BUILDING',
           schedule_interval='0 1 4 * *',
           default_args=default_args,
-          catchup=False)
+          catchup=True)
 
 def authenticate():
     HEADERS = {"Consumer-Key": consumer_key}
