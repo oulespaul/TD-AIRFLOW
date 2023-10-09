@@ -36,7 +36,7 @@ default_args = {
 }
 
 dag = DAG('DOL_CONDO',
-          schedule_interval='0 0 4 * *',
+          schedule_interval='0 0 10 * *',
           default_args=default_args,
           catchup=False)
 

@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_UNIT_OF_LAND',
-          schedule_interval='0 0 5 * *',
+          schedule_interval='0 0 11 * *',
           default_args=default_args,
           catchup=False)
 

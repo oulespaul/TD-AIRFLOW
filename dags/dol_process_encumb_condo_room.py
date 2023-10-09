@@ -36,7 +36,7 @@ default_args = {
 }
 
 dag = DAG('DOL_PROCESS_ENCUMB_CONDO_ROOM',
-          schedule_interval='0 19 4 * *',
+          schedule_interval='0 19 10 * *',
           default_args=default_args,
           catchup=False)
 

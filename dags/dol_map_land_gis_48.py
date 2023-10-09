@@ -36,7 +36,7 @@ default_args = {
 }
 
 dag = DAG('DOL_MAP_LAND_GIS_48',
-          schedule_interval='0 10 4 * *',
+          schedule_interval='0 10 10 * *',
           default_args=default_args,
           catchup=False)
 
