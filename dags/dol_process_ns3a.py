@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 import time
 import pytz
@@ -166,8 +167,9 @@ def load_to_lake(data, mapping_column):
 
 def ingestion(**kwargs):
     triggerParams = kwargs["params"]
+    ingest_date = ingest_date - relativedelta(months = 1)
     year = ingest_date.year + 543
-    month = int(ingest_date.strftime('%m')) - 1
+    month = ingest_date.strftime('%m')
 
     yearTrigger = triggerParams.get("year", year)
     monthTrigger = triggerParams.get("month", month)
