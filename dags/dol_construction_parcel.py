@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_CONSTRUCTION_PARCEL',
-          schedule_interval='0 8 10 * *',
+          schedule_interval='0 8 16 * *',
           default_args=default_args,
           catchup=False)
 

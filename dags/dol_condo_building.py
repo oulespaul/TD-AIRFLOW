@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_CONDO_BUILDING',
-          schedule_interval='0 1 10 * *',
+          schedule_interval='0 1 16 * *',
           default_args=default_args,
           catchup=True)
 

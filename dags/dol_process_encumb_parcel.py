@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_PROCESS_ENCUMB_PARCEL',
-          schedule_interval='0 21 10 * *',
+          schedule_interval='0 21 16 * *',
           default_args=default_args,
           catchup=False)
 
