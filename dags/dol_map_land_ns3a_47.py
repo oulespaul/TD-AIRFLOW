@@ -186,9 +186,9 @@ def transform_data(data):
 
 def ingestion(**kwargs):
     triggerParams = kwargs["params"]
-    ingest_date = ingest_date - relativedelta(months = 1)
-    year = ingest_date.year + 543
-    month = ingest_date.strftime('%m')
+    default_ingest_date = ingest_date - relativedelta(months = 1)
+    year = default_ingest_date .year + 543
+    month = default_ingest_date .strftime('%m')
 
     yearTrigger = triggerParams.get("year", year)
     monthTrigger = triggerParams.get("month", month)
