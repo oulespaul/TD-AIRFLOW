@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_NS3',
-          schedule_interval='0 13 16 * *',
+          schedule_interval='0 13 4 * *',
           default_args=default_args,
           catchup=False)
 

@@ -37,7 +37,7 @@ default_args = {
 }
 
 dag = DAG('DOL_PROCESS_PARCEL',
-          schedule_interval='0 23 16 * *',
+          schedule_interval='0 23 4 * *',
           default_args=default_args,
           catchup=False)
 
